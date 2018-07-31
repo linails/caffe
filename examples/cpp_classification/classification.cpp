@@ -102,18 +102,22 @@ static std::vector<int> Argmax(const std::vector<float>& v, int N) {
 }
 
 /* Return the top N predictions. */
-std::vector<Prediction> Classifier::Classify(const cv::Mat& img, int N) {
-  std::vector<float> output = Predict(img);
+std::vector<Prediction> Classifier::Classify(const cv::Mat& img, int N) 
+{
+    //
+    // 在这个成员函数内进行网络的执行
+    //
+    std::vector<float> output = Predict(img);
 
-  N = std::min<int>(labels_.size(), N);
-  std::vector<int> maxN = Argmax(output, N);
-  std::vector<Prediction> predictions;
-  for (int i = 0; i < N; ++i) {
-    int idx = maxN[i];
-    predictions.push_back(std::make_pair(labels_[idx], output[idx]));
-  }
+    N = std::min<int>(labels_.size(), N);
+    std::vector<int> maxN = Argmax(output, N);
+    std::vector<Prediction> predictions;
+    for (int i = 0; i < N; ++i) {
+        int idx = maxN[i];
+        predictions.push_back(std::make_pair(labels_[idx], output[idx]));
+    }
 
-  return predictions;
+    return predictions;
 }
 
 /* Load the mean file in binaryproto format. */
@@ -147,25 +151,29 @@ void Classifier::SetMean(const string& mean_file) {
   mean_ = cv::Mat(input_geometry_, mean.type(), channel_mean);
 }
 
-std::vector<float> Classifier::Predict(const cv::Mat& img) {
-  Blob<float>* input_layer = net_->input_blobs()[0];
-  input_layer->Reshape(1, num_channels_,
-                       input_geometry_.height, input_geometry_.width);
-  /* Forward dimension change to all layers. */
-  net_->Reshape();
+std::vector<float> Classifier::Predict(const cv::Mat& img) 
+{
+    Blob<float>* input_layer = net_->input_blobs()[0];
+    input_layer->Reshape(1, num_channels_,
+            input_geometry_.height, input_geometry_.width);
+    /* Forward dimension change to all layers. */
+    net_->Reshape();
 
-  std::vector<cv::Mat> input_channels;
-  WrapInputLayer(&input_channels);
+    std::vector<cv::Mat> input_channels;
+    WrapInputLayer(&input_channels);
 
-  Preprocess(img, &input_channels);
+    Preprocess(img, &input_channels);
 
-  net_->Forward();
+    //
+    // 前向计算在这里进行执行
+    //
+    net_->Forward();
 
-  /* Copy the output layer to a std::vector */
-  Blob<float>* output_layer = net_->output_blobs()[0];
-  const float* begin = output_layer->cpu_data();
-  const float* end = begin + output_layer->channels();
-  return std::vector<float>(begin, end);
+    /* Copy the output layer to a std::vector */
+    Blob<float>* output_layer = net_->output_blobs()[0];
+    const float* begin = output_layer->cpu_data();
+    const float* end = begin + output_layer->channels();
+    return std::vector<float>(begin, end);
 }
 
 /* Wrap the input layer of the network in separate cv::Mat objects
